@@ -9,7 +9,7 @@ AI-powered system for detecting deepfake images and verifying user age to ensure
 Due to GitHub file size limits, model files are not included in this repository.
 
 👉 Download models from here:
-[Download Models](https://drive.google.com/drive/folders/1c0CRdq8RlzhXcxZxzla9n7IETusi4it2?usp=sharing)
+https://drive.google.com/drive/folders/1c0CRdq8RlzhXcxZxzla9n7IETusi4it2?usp=sharing
 
 📌 After downloading, place them inside the `models/` folder.
 

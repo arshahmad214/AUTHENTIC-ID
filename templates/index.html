@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuthenticID - Verification Gateway</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #111;
+            color: #111;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Animated background ── */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-color: #111;
+            background-image: url('https://media.istockphoto.com/id/925574662/photo/face-detection-and-recognition-of-digital-human-3d-illustration.jpg?s=612x612&w=0&k=20&c=4_psi2ksGI7W7KJmTrXpe6mbWP5v5S2LhmrkI1mnmuU=');
+            background-position: center center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            filter: brightness(0.9) saturate(1.05);
+        }
+
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(circle at top center, rgba(255,255,255,0.12), transparent 20%),
+                        radial-gradient(circle at bottom right, rgba(124,124,255,0.12), transparent 22%);
+        }
+
+        .page {
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+            50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+        }
+
+        /* ── Layout ── */
+        .page {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(124,124,255,0.1);
+            border: 1px solid rgba(124,124,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            margin-bottom: 24px;
+        }
+
+        .logo-dot {
+            width: 8px;
+            height: 8px;
+            background: #7c7cff;
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .logo span {
+            font-size: 13px;
+            font-weight: 500;
+            color: #7c7cff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ── Main container block ── */
+        .page-block {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 26px;
+            border: 4px solid rgba(124,124,255,0.25);
+            border-radius: 36px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 28px 90px rgba(0,0,0,0.18);
+        }
+
+        /* ── Main card ── */
+        .card {
+            background: transparent;
+            border: none;
+            border-radius: 24px;
+            padding: 32px;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        }
+
+        .option-panel {
+            background: #ffffff;
+            border: 1px solid #111;
+            border-radius: 24px;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+            padding: 28px;
+        }
+
+        .option-panel > * + * {
+            margin-top: 24px;
+        }
+
+        /* ── Progress steps ── */
+        .steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            gap: 0;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.4s ease;
+        }
+
+        .step-item.active .step-circle {
+            background: rgba(124,124,255,0.2);
+            border-color: #7c7cff;
+            color: #7c7cff;
+            box-shadow: 0 0 20px rgba(124,124,255,0.3);
+        }
+
+        .step-item.done .step-circle {
+            background: rgba(0,200,100,0.2);
+            border-color: #00c864;
+            color: #00c864;
+        }
+
+        .step-label {
+            font-size: 10px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        .step-item.active .step-label { color: #7c7cff; }
+        .step-item.done .step-label { color: #00c864; }
+
+        .step-line {
+            width: 50px;
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin-bottom: 22px;
+            transition: background 0.4s;
+        }
+
+        .step-line.done { background: #00c864; }
+
+        /* ── Upload zone ── */
+        .upload-zone {
+            border: none;
+            background: transparent;
+            border-radius: 16px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover {
+            background: #f7f7f7;
+        }
+
+        .upload-zone.has-image {
+            background: transparent;
+            padding: 32px 20px;
+        }
+
+        .upload-icon-wrap {
+            width: 64px;
+            height: 64px;
+            background: rgba(124,124,255,0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+
+        .upload-zone h3 {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #111;
+        }
+
+        #preview {
+            max-width: 100%;
+            max-height: 220px;
+            border-radius: 16px;
+            display: none;
+            margin: 0 auto;
+            background: #111;
+            padding: 12px;
+            box-shadow: 0 16px 35px rgba(0,0,0,0.12);
+        }
+
+        .upload-zone p {
+            font-size: 12px;
+            color: #555;
+        }
+
+        input[type="file"] { display: none; }
+
+        /* ── Buttons ── */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-verify {
+            background: linear-gradient(135deg, #7c7cff, #5a5aff);
+            color: white;
+            box-shadow: 0 4px 20px rgba(124,124,255,0.3);
+        }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(124,124,255,0.4);
+        }
+
+        .btn-verify:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-webcam {
+            background: rgba(255,255,255,0.04);
+            color: #888;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .btn-webcam:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        /* ── Loading ── */
+        .loading-wrap {
+            display: none;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #7c7cff, #a78bfa);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            animation: loading-anim 2s ease-in-out infinite;
+        }
+
+        @keyframes loading-anim {
+            0% { width: 0%; margin-left: 0%; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+
+        .loading-text {
+            font-size: 13px;
+            color: #7c7cff;
+            font-weight: 500;
+        }
+
+        /* ── Result ── */
+        .result-wrap {
+            display: none;
+            margin-top: 20px;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .result-inner {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .result-granted {
+            background: linear-gradient(135deg,
+                rgba(0,200,100,0.1), rgba(0,200,100,0.05));
+            border: 1px solid rgba(0,200,100,0.3);
+        }
+
+        .result-denied {
+            background: linear-gradient(135deg,
+                rgba(255,60,60,0.1), rgba(255,60,60,0.05));
+            border: 1px solid rgba(255,60,60,0.3);
+        }
+
+        .result-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .result-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .result-granted .result-title { color: #00c864; }
+        .result-denied .result-title { color: #ff4444; }
+
+        .result-desc {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .result-badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-green {
+            background: rgba(0,200,100,0.15);
+            color: #00c864;
+            border: 1px solid rgba(0,200,100,0.3);
+        }
+
+        .badge-red {
+            background: rgba(255,60,60,0.15);
+            color: #ff4444;
+            border: 1px solid rgba(255,60,60,0.3);
+        }
+
+        .badge-blue {
+            background: rgba(124,124,255,0.15);
+            color: #7c7cff;
+            border: 1px solid rgba(124,124,255,0.3);
+        }
+
+        /* ── Try again ── */
+        .btn-try {
+            margin-top: 12px;
+            padding: 10px 24px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #666;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .btn-try:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+        /* ── Footer ── */
+        .footer {
+            margin-top: 32px;
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+        }
+
+        .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #444;
+        }
+
+        .footer-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00c864;
+        }
+
+        video#webcam {
+            width: 100%;
+            border-radius: 12px;
+            display: none;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="page">
+    <div class="page-block">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <div class="logo-dot"></div>
+            <span>AuthenticID</span>
+        </div>
+        <h1>Verify Your Identity</h1>
+        <p class="subtitle">
+            AI-powered deepfake detection and age verification gateway
+        </p>
+    </div>
+
+    <!-- Main Card -->
+    <div class="card">
+        <div class="option-panel">
+
+            <!-- Steps -->
+            <div class="steps">
+            <div class="step-item active" id="step1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Upload</div>
+            </div>
+            <div class="step-line" id="line1"></div>
+            <div class="step-item" id="step2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Deepfake</div>
+            </div>
+            <div class="step-line" id="line2"></div>
+            <div class="step-item" id="step3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Age</div>
+            </div>
+            <div class="step-line" id="line3"></div>
+            <div class="step-item" id="step4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Result</div>
+            </div>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone"
+             onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon-wrap">📷</div>
+            <h3>Drop your photo here</h3>
+            <p>Click to browse • JPG, PNG supported</p>
+            <img id="preview" src="" alt="preview"/>
+        </div>
+
+        <input type="file" id="fileInput"
+               accept="image/*" onchange="previewImage(event)">
+
+        <video id="webcam" autoplay></video>
+
+        <!-- Buttons -->
+        <div class="btn-group">
+            <button class="btn btn-verify" id="verifyBtn"
+                    onclick="verifyImage()" disabled>
+                🔍 Verify Identity
+            </button>
+            <button class="btn btn-webcam" onclick="toggleWebcam()">
+                📸 Use Webcam Instead
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-wrap" id="loading">
+            <div class="loading-bar">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <div class="loading-text" id="loadingText">
+                Analyzing image...
+            </div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-wrap" id="resultWrap">
+            <div class="result-inner" id="resultInner">
+                <span class="result-icon" id="resultIcon"></span>
+                <div class="result-title" id="resultTitle"></div>
+                <div class="result-desc" id="resultDesc"></div>
+                <div class="result-badges" id="resultBadges"></div>
+                <button class="btn-try" onclick="resetForm()">
+                    ↩ Try Again
+                </button>
+            </div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-item">
+            <div class="footer-dot"></div>
+            Deepfake Detection
+        </div>
+        <div class="footer-item">
+            <div class="footer-dot"></div>
+            Age Verification
+        </div>
+        <div class="footer-item">
+            <div class="footer-dot"></div>
+            AI Powered
+        </div>
+    </div>
+</div>
+
+<script>
+let webcamActive = false;
+let stream = null;
+let capturedBlob = null;
+
+function previewImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const preview = document.getElementById('preview');
+        const zone = document.getElementById('uploadZone');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        zone.querySelector('.upload-icon-wrap').style.display = 'none';
+        zone.querySelector('h3').style.display = 'none';
+        zone.querySelector('p').style.display = 'none';
+        zone.classList.add('has-image');
+        document.getElementById('verifyBtn').disabled = false;
+        document.getElementById('resultWrap').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    capturedBlob = null;
+}
+
+function toggleWebcam() {
+    const btn = document.querySelector('.btn-webcam');
+    if (!webcamActive) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(s => {
+                stream = s;
+                const video = document.getElementById('webcam');
+                video.srcObject = s;
+                video.style.display = 'block';
+                webcamActive = true;
+                document.getElementById('uploadZone').style.display = 'none';
+                btn.textContent = '📸 Capture Photo';
+            })
+            .catch(() => alert('Cannot access webcam. Try uploading instead.'));
+    } else {
+        captureWebcam();
+    }
+}
+
+function captureWebcam() {
+    const video = document.getElementById('webcam');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+        capturedBlob = blob;
+        document.getElementById('verifyBtn').disabled = false;
+    }, 'image/jpeg');
+    stream.getTracks().forEach(t => t.stop());
+    video.style.display = 'none';
+    webcamActive = false;
+    document.querySelector('.btn-webcam').textContent = '📸 Use Webcam Instead';
+    document.getElementById('uploadZone').style.display = 'block';
+}
+
+function setStep(active, doneUpTo) {
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('step' + i);
+        el.classList.remove('active', 'done');
+        if (i < active) el.classList.add('done');
+        if (i === active) el.classList.add('active');
+    }
+    for (let i = 1; i <= 3; i++) {
+        const line = document.getElementById('line' + i);
+        line.classList.toggle('done', i < active);
+    }
+}
+
+function verifyImage() {
+    const formData = new FormData();
+    if (capturedBlob) {
+        formData.append('image', capturedBlob, 'webcam.jpg');
+    } else {
+        const file = document.getElementById('fileInput').files[0];
+        if (!file) { alert('Please upload an image first!'); return; }
+        formData.append('image', file);
+    }
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultWrap').style.display = 'none';
+    document.getElementById('verifyBtn').disabled = true;
+    document.getElementById('loadingText').textContent =
+        'Checking for deepfake...';
+    setStep(2);
+
+    setTimeout(() => {
+        document.getElementById('loadingText').textContent =
+            'Verifying age...';
+        setStep(3);
+    }, 1500);
+
+    fetch('/predict', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('verifyBtn').disabled = false;
+
+        const wrap   = document.getElementById('resultWrap');
+        const inner  = document.getElementById('resultInner');
+        const icon   = document.getElementById('resultIcon');
+        const title  = document.getElementById('resultTitle');
+        const desc   = document.getElementById('resultDesc');
+        const badges = document.getElementById('resultBadges');
+
+        wrap.style.display = 'block';
+        badges.innerHTML = '';
+
+        if (data.status === 'granted') {
+            setStep(4);
+            inner.className = 'result-inner result-granted';
+            icon.textContent = '✅';
+            title.textContent = 'Access Granted!';
+            desc.textContent = 'Identity verified successfully.';
+            badges.innerHTML = `
+                <span class="badge badge-green">✓ Real Face</span>
+                <span class="badge badge-green">✓ Age 18+</span>
+                <span class="badge badge-blue">AI Verified</span>`;
+
+        } else if (data.reason === 'deepfake') {
+            setStep(2);
+            inner.className = 'result-inner result-denied';
+            icon.textContent = '🚫';
+            title.textContent = 'Access Denied';
+            desc.textContent = 'Deepfake image detected. Please use a real photo.';
+            badges.innerHTML = `
+                <span class="badge badge-red">✗ Deepfake Detected</span>`;
+
+        } else if (data.reason === 'age') {
+            setStep(3);
+            inner.className = 'result-inner result-denied';
+            icon.textContent = '🔞';
+            title.textContent = 'Access Denied';
+            desc.textContent = 'You must be 18 or older to access this content.';
+            badges.innerHTML = `
+                <span class="badge badge-green">✓ Real Face</span>
+                <span class="badge badge-red">✗ Under 18</span>`;
+        } else {
+            inner.className = 'result-inner result-denied';
+            icon.textContent = '❌';
+            title.textContent = 'Error';
+            desc.textContent = data.error || 'Something went wrong.';
+        }
+    })
+    .catch(err => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('verifyBtn').disabled = false;
+        alert('Error: ' + err.message);
+    });
+}
+
+function resetForm() {
+    document.getElementById('fileInput').value = '';
+    document.getElementById('preview').style.display = 'none';
+    document.getElementById('resultWrap').style.display = 'none';
+    document.getElementById('verifyBtn').disabled = true;
+
+    const zone = document.getElementById('uploadZone');
+    zone.classList.remove('has-image');
+    zone.querySelector('.upload-icon-wrap').style.display = 'flex';
+    zone.querySelector('h3').style.display = 'block';
+    zone.querySelector('p').style.display = 'block';
+
+    setStep(1);
+    capturedBlob = null;
+}
+</script>
+</body>
+</html>
